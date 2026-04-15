@@ -1,3 +1,5 @@
 {
-    "version": "1.0.6"
+    "version": "1.0.7",
+    "description": "Sushi conveyor belt plate counter with THB pricing",
+    "info": "This version includes updates to run on nodemon for testing purposes. The version number has been updated to reflect the changes made for development and testing."
 }
