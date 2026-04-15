@@ -35,10 +35,16 @@ header {
   z-index: 10;
   box-shadow: var(--shadow);
 }
-header h1 {
+header .header {
   font-size: 1.3rem;
   font-weight: 700;
   letter-spacing: 0.5px;
+}
+header .header .app-version {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--muted);
+  margin-left: 8px;
 }
 header span {
   font-size: 1.5rem;
@@ -373,3 +379,5 @@ footer {
   margin-bottom: 12px;
   display: none;
 }
+
+/*# sourceMappingURL=styles.css.map */

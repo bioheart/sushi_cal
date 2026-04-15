@@ -9,13 +9,15 @@
 <body>
 
 <header>
-  <h1><span>🍣</span>Sushi Plate Counter</h1>
+  <div class="header">
+    <span>🍣</span><span>Sushi Plate Counter</span><span class="app-version" id="appVersion">v1.0.0</span>
+  </div>
 </header>
 
 <div class="plates-list" id="platesList"></div>
 
 <div class="add-custom-wrap">
-  <button class="add-custom-btn" onclick="openModal()">＋ Add Custom Plate</button>
+  <button class="add-custom-btn" id="addCustomBtn">＋ Add Custom Plate</button>
 </div>
 
 <footer>
@@ -25,15 +27,15 @@
       <div id="totalPlatesLabel" class="total-plates"></div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;">
-      <button class="undo-btn" id="undoBtn" onclick="undo()" disabled>↩ Undo</button>
-      <button class="reset-btn" onclick="resetAll()">Reset</button>
+      <button class="undo-btn" id="undoBtn" disabled>↩ Undo</button>
+      <button class="reset-btn" id="resetBtn">Reset</button>
       <div id="totalAmount" class="total-amount">฿0</div>
     </div>
   </div>
 </footer>
 
 <!-- Modal -->
-<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+<div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <h2 id="modalTitle">Add Custom Plate</h2>
     <p id="modalSubtitle">Set a name and price for your custom plate.</p>
@@ -43,229 +45,12 @@
     <input type="number" id="inputPrice" placeholder="e.g. 120 (THB)" min="1" max="9999" />
     <div class="error-msg" id="errorMsg">Please enter a valid price (1–9999).</div>
     <div class="modal-actions">
-      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
-      <button class="modal-confirm" onclick="confirmModal()">Confirm</button>
+      <button class="modal-cancel" id="modalCancelBtn">Cancel</button>
+      <button class="modal-confirm" id="modalConfirmBtn">Confirm</button>
     </div>
   </div>
 </div>
 
-<script>
-  let plates = [];
-  let customIdCounter = 1;
-  let modalMode = 'add'; // 'add' | 'edit'
-  let editTargetId = null;
-  let history = []; // max 3 snapshots
-
-  function saveHistory() {
-    history.push(JSON.parse(JSON.stringify(plates)));
-    if (history.length > 3) history.shift();
-  }
-
-  function undo() {
-    if (history.length === 0) return;
-    plates = history.pop();
-    render();
-  }
-
-  function render() {
-    const list = document.getElementById('platesList');
-    list.innerHTML = '';
-    let total = 0, totalPlates = 0;
-
-    plates.forEach(plate => {
-      total += plate.price * plate.count;
-      totalPlates += plate.count;
-
-      const card = document.createElement('div');
-      card.className = 'plate-card';
-      card.innerHTML = `
-        <div class="plate-dot" style="background:${plate.color};border-color:${plate.borderColor || 'rgba(0,0,0,0.12)'}"></div>
-        <div class="plate-info">
-          <div class="plate-name">
-            ${escHtml(plate.name)}
-            <span class="count-badge ${plate.count === 0 ? 'zero' : ''}">${plate.count}</span>
-          </div>
-          <div class="plate-price">
-            ฿${plate.price} / plate
-            ${plate.editable ? `<button class="edit-price-btn">edit</button>` : ''}
-          </div>
-        </div>
-        <div class="plate-controls">
-          ${plate.count > 0
-            ? `<button class="ctrl-btn minus-btn" aria-label="Remove one">−</button>`
-            : '<div style="width:44px"></div>'}
-          <div class="count-display">${plate.count}</div>
-          ${plate.editable ? `<button class="ctrl-btn delete-btn" aria-label="Delete plate">🗑</button>` : '<div style="width:44px"></div>'}
-        </div>
-      `;
-
-      // Tap the card to increment
-      card.addEventListener('click', () => adjust(plate.id, 1));
-
-      // Minus button decrements without bubbling to card
-      const minusBtn = card.querySelector('.minus-btn');
-      if (minusBtn) {
-        minusBtn.addEventListener('click', e => {
-          e.stopPropagation();
-          adjust(plate.id, -1);
-        });
-      }
-
-      // Edit price button should not trigger card increment
-      const editBtn = card.querySelector('.edit-price-btn');
-      if (editBtn) {
-        editBtn.addEventListener('click', e => {
-          e.stopPropagation();
-          openEditModal(plate.id);
-        });
-      }
-
-      // Delete button removes the custom plate row
-      const deleteBtn = card.querySelector('.delete-btn');
-      if (deleteBtn) {
-        deleteBtn.addEventListener('click', e => {
-          e.stopPropagation();
-          deletePlate(plate.id);
-        });
-      }
-
-      list.appendChild(card);
-    });
-
-    document.getElementById('totalAmount').textContent = `฿${total}`;
-    document.getElementById('totalPlatesLabel').textContent =
-      totalPlates > 0 ? `${totalPlates} plate${totalPlates !== 1 ? 's' : ''}` : '';
-    const undoBtn = document.getElementById('undoBtn');
-    undoBtn.disabled = history.length === 0;
-    undoBtn.title = history.length > 0 ? `${history.length} step${history.length > 1 ? 's' : ''} available` : '';
-  }
-
-  function deletePlate(id) {
-    saveHistory();
-    plates = plates.filter(p => p.id !== id);
-    render();
-  }
-
-  function adjust(id, delta) {
-    const plate = plates.find(p => p.id === id);
-    if (!plate) return;
-    const next = Math.max(0, plate.count + delta);
-    if (next === plate.count) return; // no change, don't pollute history
-    saveHistory();
-    plate.count = next;
-    render();
-  }
-
-  function resetAll() {
-    saveHistory();
-    plates.forEach(p => p.count = 0);
-    render();
-  }
-
-  function escHtml(str) {
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  // Modal
-  function openModal() {
-    modalMode = 'add';
-    editTargetId = null;
-    document.getElementById('modalTitle').textContent = 'Add Custom Plate';
-    document.getElementById('modalSubtitle').textContent = 'Set a name and price for your custom plate.';
-    document.getElementById('inputName').value = '';
-    document.getElementById('inputName').style.display = '';
-    document.querySelector('label[for="inputName"]').style.display = '';
-    document.getElementById('inputPrice').value = '';
-    document.getElementById('errorMsg').style.display = 'none';
-    document.getElementById('modalOverlay').classList.add('open');
-    setTimeout(() => document.getElementById('inputName').focus(), 50);
-  }
-
-  function openEditModal(id) {
-    const plate = plates.find(p => p.id === id);
-    if (!plate) return;
-    modalMode = 'edit';
-    editTargetId = id;
-    document.getElementById('modalTitle').textContent = `Edit "${plate.name}"`;
-    document.getElementById('modalSubtitle').textContent = 'Update the price for this plate.';
-    document.getElementById('inputName').style.display = 'none';
-    document.querySelector('label[for="inputName"]').style.display = 'none';
-    document.getElementById('inputPrice').value = plate.price;
-    document.getElementById('errorMsg').style.display = 'none';
-    document.getElementById('modalOverlay').classList.add('open');
-    setTimeout(() => document.getElementById('inputPrice').focus(), 50);
-  }
-
-  function closeModal() {
-    document.getElementById('modalOverlay').classList.remove('open');
-  }
-
-  function handleOverlayClick(e) {
-    if (e.target === document.getElementById('modalOverlay')) closeModal();
-  }
-
-  function confirmModal() {
-    const priceRaw = document.getElementById('inputPrice').value.trim();
-    const price = parseInt(priceRaw, 10);
-    const errEl = document.getElementById('errorMsg');
-
-    if (!priceRaw || isNaN(price) || price < 1 || price > 9999) {
-      errEl.style.display = 'block';
-      return;
-    }
-    errEl.style.display = 'none';
-
-    saveHistory();
-    if (modalMode === 'edit') {
-      const plate = plates.find(p => p.id === editTargetId);
-      if (plate) plate.price = price;
-    } else {
-      const rawName = document.getElementById('inputName').value.trim();
-      const name = rawName || `Custom ${customIdCounter}`;
-      plates.push({
-        id: `custom_${customIdCounter++}`,
-        name,
-        price,
-        color: 'linear-gradient(135deg, #8e44ad, #3498db)',
-        borderColor: '#8e44ad',
-        editable: true,
-        count: 0,
-      });
-    }
-
-    closeModal();
-    render();
-  }
-
-  // Allow Enter key in modal
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && document.getElementById('modalOverlay').classList.contains('open')) {
-      confirmModal();
-    }
-    if (e.key === 'Escape') closeModal();
-  });
-
-  async function init() {
-    try {
-      const res = await fetch('plates.json');
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      plates = data.plates.map(p => ({ ...p, count: 0 }));
-    } catch (err) {
-      console.error('Failed to load plates.json:', err);
-      // Fallback so the app still works
-      plates = [
-        { id: 'white',  name: 'White',  price: 30,  color: '#f5f5f0', borderColor: '#ccc', editable: false, count: 0 },
-        { id: 'red',    name: 'Red',    price: 40,  color: '#e74c3c', borderColor: '#c0392b', editable: false, count: 0 },
-        { id: 'silver', name: 'Silver', price: 60,  color: 'linear-gradient(135deg,#bdc3c7,#95a5a6)', borderColor: '#95a5a6', editable: false, count: 0 },
-        { id: 'gold',   name: 'Gold',   price: 80,  color: 'linear-gradient(135deg,#f7c948,#d4a017)', borderColor: '#d4a017', editable: false, count: 0 },
-        { id: 'black',  name: 'Black',  price: 100, color: '#2c2520', borderColor: '#111', editable: false, count: 0 },
-      ];
-    }
-    render();
-  }
-
-  init();
-</script>
+<script src="app.js"></script>
 </body>
 </html>
