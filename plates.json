@@ -1,0 +1,44 @@
+{
+  "plates": [
+    {
+      "id": "white",
+      "name": "White",
+      "price": 30,
+      "color": "#f5f5f0",
+      "borderColor": "#cccccc",
+      "editable": false
+    },
+    {
+      "id": "red",
+      "name": "Red",
+      "price": 40,
+      "color": "#e74c3c",
+      "borderColor": "#c0392b",
+      "editable": false
+    },
+    {
+      "id": "silver",
+      "name": "Silver",
+      "price": 60,
+      "color": "linear-gradient(135deg, #bdc3c7, #95a5a6)",
+      "borderColor": "#95a5a6",
+      "editable": false
+    },
+    {
+      "id": "gold",
+      "name": "Gold",
+      "price": 80,
+      "color": "linear-gradient(135deg, #f7c948, #d4a017)",
+      "borderColor": "#d4a017",
+      "editable": false
+    },
+    {
+      "id": "black",
+      "name": "Black",
+      "price": 100,
+      "color": "#2c2520",
+      "borderColor": "#111",
+      "editable": false
+    }
+  ]
+}
