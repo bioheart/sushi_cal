@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sushi Plate Counter</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f8f5f0;
+      --surface: #ffffff;
+      --border: #e8e0d8;
+      --text: #2c2520;
+      --muted: #8a7e76;
+      --accent: #c0392b;
+      --accent-hover: #a93226;
+      --radius: 16px;
+      --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 20px 16px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: var(--shadow);
+    }
+
+    header h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    header span {
+      font-size: 1.5rem;
+      margin-right: 6px;
+    }
+
+    .plates-list {
+      flex: 1;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 520px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .plate-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      padding: 14px 14px 14px 16px;
+      gap: 12px;
+      box-shadow: var(--shadow);
+      transition: transform 0.1s, background 0.1s;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .plate-card:active { transform: scale(0.99); background: #f5f0eb; }
+
+    .plate-dot {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 2px solid rgba(0,0,0,0.12);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    }
+
+    .plate-dot.white  { background: #f5f5f0; border-color: #ccc; }
+    .plate-dot.red    { background: #e74c3c; }
+    .plate-dot.silver { background: linear-gradient(135deg,#bdc3c7,#95a5a6); }
+    .plate-dot.gold   { background: linear-gradient(135deg,#f7c948,#d4a017); }
+    .plate-dot.black  { background: #2c2520; }
+    .plate-dot.custom { background: linear-gradient(135deg,#8e44ad,#3498db); }
+
+    .plate-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .plate-name {
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .plate-price {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .edit-price-btn {
+      background: none;
+      border: none;
+      font-size: 0.75rem;
+      color: #3498db;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .plate-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .ctrl-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      font-size: 1.5rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .ctrl-btn:active { transform: scale(0.92); }
+
+    .minus-btn {
+      background: #ffe5e2;
+      color: #c0392b;
+    }
+
+    .minus-btn:hover { background: #ffd0cb; }
+
+    .delete-btn {
+      background: #fdecea;
+      color: #c0392b;
+      font-size: 1rem;
+    }
+
+    .delete-btn:hover { background: #fad0cc; }
+
+    .count-display {
+      min-width: 28px;
+      text-align: center;
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    /* Add custom button */
+    .add-custom-wrap {
+      max-width: 520px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 16px 16px;
+    }
+
+    .add-custom-btn {
+      width: 100%;
+      padding: 15px;
+      background: var(--surface);
+      border: 2px dashed #b0a498;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .add-custom-btn:hover { background: #f0ebe4; border-color: #888; }
+
+    /* Total footer */
+    footer {
+      background: var(--surface);
+      border-top: 1.5px solid var(--border);
+      padding: 18px 20px;
+      position: sticky;
+      bottom: 0;
+      z-index: 10;
+      box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+    }
+
+    .total-row {
+      max-width: 520px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .total-label { font-size: 1rem; color: var(--muted); font-weight: 500; }
+
+    .total-amount {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -0.5px;
+    }
+
+    .total-plates {
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-align: right;
+      margin-top: 2px;
+    }
+
+    .reset-btn {
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .reset-btn:hover { background: #f0ebe4; }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 100;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border-radius: 20px 20px 0 0;
+      padding: 24px 20px 36px;
+      width: 100%;
+      max-width: 520px;
+      animation: slideUp 0.25s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(40px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    .modal h2 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .modal p { font-size: 0.85rem; color: var(--muted); margin-bottom: 20px; }
+
+    .modal label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--muted);
+    }
+
+    .modal input[type="text"],
+    .modal input[type="number"] {
+      width: 100%;
+      padding: 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-size: 1.05rem;
+      margin-bottom: 16px;
+      outline: none;
+      transition: border-color 0.15s;
+      background: var(--bg);
+    }
+
+    .modal input:focus { border-color: #3498db; }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .modal-cancel {
+      flex: 1;
+      padding: 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      background: none;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .modal-confirm {
+      flex: 2;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .modal-confirm:hover { background: var(--accent-hover); }
+
+    .error-msg {
+      color: var(--accent);
+      font-size: 0.82rem;
+      margin-top: -12px;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    /* Plate count badge */
+    .count-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 22px;
+      border-radius: 11px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0 5px;
+    }
+
+    .count-badge.zero { display: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1><span>🍣</span>Sushi Plate Counter</h1>
+</header>
+
+<div class="plates-list" id="platesList"></div>
+
+<div class="add-custom-wrap">
+  <button class="add-custom-btn" onclick="openModal()">＋ Add Custom Plate</button>
+</div>
+
+<footer>
+  <div class="total-row">
+    <div>
+      <div class="total-label">Total</div>
+      <div id="totalPlatesLabel" class="total-plates"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="reset-btn" onclick="resetAll()">Reset</button>
+      <div id="totalAmount" class="total-amount">฿0</div>
+    </div>
+  </div>
+</footer>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <h2 id="modalTitle">Add Custom Plate</h2>
+    <p id="modalSubtitle">Set a name and price for your custom plate.</p>
+    <label for="inputName">Plate Name</label>
+    <input type="text" id="inputName" placeholder="e.g. Special Roll" maxlength="24" />
+    <label for="inputPrice">Price</label>
+    <input type="number" id="inputPrice" placeholder="e.g. 120 (THB)" min="1" max="9999" />
+    <div class="error-msg" id="errorMsg">Please enter a valid price (1–9999).</div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmModal()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const PRESETS = [
+    { id: 'white',  name: 'White',  price: 30,  colorClass: 'white',  editable: false },
+    { id: 'red',    name: 'Red',    price: 40,  colorClass: 'red',    editable: false },
+    { id: 'silver', name: 'Silver', price: 60,  colorClass: 'silver', editable: false },
+    { id: 'gold',   name: 'Gold',   price: 80,  colorClass: 'gold',   editable: false },
+    { id: 'black',  name: 'Black',  price: 100, colorClass: 'black',  editable: false },
+  ];
+
+  let plates = PRESETS.map(p => ({ ...p, count: 0 }));
+  let customIdCounter = 1;
+  let modalMode = 'add'; // 'add' | 'edit'
+  let editTargetId = null;
+
+  function render() {
+    const list = document.getElementById('platesList');
+    list.innerHTML = '';
+    let total = 0, totalPlates = 0;
+
+    plates.forEach(plate => {
+      total += plate.price * plate.count;
+      totalPlates += plate.count;
+
+      const card = document.createElement('div');
+      card.className = 'plate-card';
+      card.innerHTML = `
+        <div class="plate-dot ${plate.colorClass}"></div>
+        <div class="plate-info">
+          <div class="plate-name">
+            ${escHtml(plate.name)}
+            <span class="count-badge ${plate.count === 0 ? 'zero' : ''}">${plate.count}</span>
+          </div>
+          <div class="plate-price">
+            ฿${plate.price} / plate
+            ${plate.editable ? `<button class="edit-price-btn">edit</button>` : ''}
+          </div>
+        </div>
+        <div class="plate-controls">
+          ${plate.count > 0
+            ? `<button class="ctrl-btn minus-btn" aria-label="Remove one">−</button>`
+            : '<div style="width:44px"></div>'}
+          <div class="count-display">${plate.count}</div>
+          ${plate.editable ? `<button class="ctrl-btn delete-btn" aria-label="Delete plate">🗑</button>` : '<div style="width:44px"></div>'}
+        </div>
+      `;
+
+      // Tap the card to increment
+      card.addEventListener('click', () => adjust(plate.id, 1));
+
+      // Minus button decrements without bubbling to card
+      const minusBtn = card.querySelector('.minus-btn');
+      if (minusBtn) {
+        minusBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          adjust(plate.id, -1);
+        });
+      }
+
+      // Edit price button should not trigger card increment
+      const editBtn = card.querySelector('.edit-price-btn');
+      if (editBtn) {
+        editBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          openEditModal(plate.id);
+        });
+      }
+
+      // Delete button removes the custom plate row
+      const deleteBtn = card.querySelector('.delete-btn');
+      if (deleteBtn) {
+        deleteBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          deletePlate(plate.id);
+        });
+      }
+
+      list.appendChild(card);
+    });
+
+    document.getElementById('totalAmount').textContent = `฿${total}`;
+    document.getElementById('totalPlatesLabel').textContent =
+      totalPlates > 0 ? `${totalPlates} plate${totalPlates !== 1 ? 's' : ''}` : '';
+  }
+
+  function deletePlate(id) {
+    plates = plates.filter(p => p.id !== id);
+    render();
+  }
+
+  function adjust(id, delta) {
+    const plate = plates.find(p => p.id === id);
+    if (!plate) return;
+    plate.count = Math.max(0, plate.count + delta);
+    render();
+  }
+
+  function resetAll() {
+    plates.forEach(p => p.count = 0);
+    render();
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // Modal
+  function openModal() {
+    modalMode = 'add';
+    editTargetId = null;
+    document.getElementById('modalTitle').textContent = 'Add Custom Plate';
+    document.getElementById('modalSubtitle').textContent = 'Set a name and price for your custom plate.';
+    document.getElementById('inputName').value = '';
+    document.getElementById('inputName').style.display = '';
+    document.querySelector('label[for="inputName"]').style.display = '';
+    document.getElementById('inputPrice').value = '';
+    document.getElementById('errorMsg').style.display = 'none';
+    document.getElementById('modalOverlay').classList.add('open');
+    setTimeout(() => document.getElementById('inputName').focus(), 50);
+  }
+
+  function openEditModal(id) {
+    const plate = plates.find(p => p.id === id);
+    if (!plate) return;
+    modalMode = 'edit';
+    editTargetId = id;
+    document.getElementById('modalTitle').textContent = `Edit "${plate.name}"`;
+    document.getElementById('modalSubtitle').textContent = 'Update the price for this plate.';
+    document.getElementById('inputName').style.display = 'none';
+    document.querySelector('label[for="inputName"]').style.display = 'none';
+    document.getElementById('inputPrice').value = plate.price;
+    document.getElementById('errorMsg').style.display = 'none';
+    document.getElementById('modalOverlay').classList.add('open');
+    setTimeout(() => document.getElementById('inputPrice').focus(), 50);
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
+  }
+
+  function confirmModal() {
+    const priceRaw = document.getElementById('inputPrice').value.trim();
+    const price = parseInt(priceRaw, 10);
+    const errEl = document.getElementById('errorMsg');
+
+    if (!priceRaw || isNaN(price) || price < 1 || price > 9999) {
+      errEl.style.display = 'block';
+      return;
+    }
+    errEl.style.display = 'none';
+
+    if (modalMode === 'edit') {
+      const plate = plates.find(p => p.id === editTargetId);
+      if (plate) plate.price = price;
+    } else {
+      const rawName = document.getElementById('inputName').value.trim();
+      const name = rawName || `Custom ${customIdCounter}`;
+      plates.push({
+        id: `custom_${customIdCounter++}`,
+        name,
+        price,
+        colorClass: 'custom',
+        editable: true,
+        count: 0,
+      });
+    }
+
+    closeModal();
+    render();
+  }
+
+  // Allow Enter key in modal
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('modalOverlay').classList.contains('open')) {
+      confirmModal();
+    }
+    if (e.key === 'Escape') closeModal();
+  });
+
+  render();
+</script>
+</body>
+</html>
