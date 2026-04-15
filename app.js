@@ -9,7 +9,7 @@ let history = []; // max 3 snapshots
 // ─── History ─────────────────────────────────────────────────────────────────
 function saveHistory() {
   history.push(JSON.parse(JSON.stringify(plates)));
-  if (history.length > 5) history.shift();
+  if (history.length > 10) history.shift();
 }
 
 function undo() {
@@ -117,7 +117,9 @@ function deletePlate(id) {
 
 function resetAll() {
   saveHistory();
-  plates.forEach(p => p.count = 0);
+  plates = plates
+    .filter(p => !p.editable)   // remove custom plates
+    .map(p => ({ ...p, count: 0 })); // zero preset counts
   render();
 }
 
@@ -189,7 +191,7 @@ function confirmModal() {
       color: 'linear-gradient(135deg, #8e44ad, #3498db)',
       borderColor: '#8e44ad',
       editable: true,
-      count: 0,
+      count: 1,
     });
   }
 
