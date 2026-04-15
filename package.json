@@ -1,0 +1,13 @@
+{
+  "name": "sushi-plate-counter",
+  "version": "1.0.0",
+  "description": "Sushi conveyor belt plate counter with THB pricing",
+  "scripts": {
+    "dev": "nodemon server.js"
+  },
+  "nodemonConfig": {
+    "watch": ["*.html", "*.js", "*.css", "*.json"],
+    "ignore": ["node_modules"],
+    "ext": "html,js,css,json"
+  }
+}
