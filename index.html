@@ -230,7 +230,7 @@
       margin-top: 2px;
     }
 
-    .reset-btn {
+    .reset-btn, .undo-btn {
       background: none;
       border: 1.5px solid var(--border);
       border-radius: 8px;
@@ -238,10 +238,17 @@
       font-size: 0.82rem;
       color: var(--muted);
       cursor: pointer;
-      transition: background 0.15s;
+      transition: background 0.15s, opacity 0.15s;
     }
 
-    .reset-btn:hover { background: #f0ebe4; }
+    .reset-btn:hover, .undo-btn:hover { background: #f0ebe4; }
+
+    .undo-btn:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    .undo-btn:disabled:hover { background: none; }
 
     /* Modal */
     .modal-overlay {
@@ -378,7 +385,8 @@
       <div class="total-label">Total</div>
       <div id="totalPlatesLabel" class="total-plates"></div>
     </div>
-    <div style="display:flex;align-items:center;gap:12px;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button class="undo-btn" id="undoBtn" onclick="undo()" disabled>↩ Undo</button>
       <button class="reset-btn" onclick="resetAll()">Reset</button>
       <div id="totalAmount" class="total-amount">฿0</div>
     </div>
@@ -415,6 +423,18 @@
   let customIdCounter = 1;
   let modalMode = 'add'; // 'add' | 'edit'
   let editTargetId = null;
+  let history = []; // max 3 snapshots
+
+  function saveHistory() {
+    history.push(JSON.parse(JSON.stringify(plates)));
+    if (history.length > 3) history.shift();
+  }
+
+  function undo() {
+    if (history.length === 0) return;
+    plates = history.pop();
+    render();
+  }
 
   function render() {
     const list = document.getElementById('platesList');
@@ -484,9 +504,13 @@
     document.getElementById('totalAmount').textContent = `฿${total}`;
     document.getElementById('totalPlatesLabel').textContent =
       totalPlates > 0 ? `${totalPlates} plate${totalPlates !== 1 ? 's' : ''}` : '';
+    const undoBtn = document.getElementById('undoBtn');
+    undoBtn.disabled = history.length === 0;
+    undoBtn.title = history.length > 0 ? `${history.length} step${history.length > 1 ? 's' : ''} available` : '';
   }
 
   function deletePlate(id) {
+    saveHistory();
     plates = plates.filter(p => p.id !== id);
     render();
   }
@@ -494,11 +518,15 @@
   function adjust(id, delta) {
     const plate = plates.find(p => p.id === id);
     if (!plate) return;
-    plate.count = Math.max(0, plate.count + delta);
+    const next = Math.max(0, plate.count + delta);
+    if (next === plate.count) return; // no change, don't pollute history
+    saveHistory();
+    plate.count = next;
     render();
   }
 
   function resetAll() {
+    saveHistory();
     plates.forEach(p => p.count = 0);
     render();
   }
@@ -556,6 +584,7 @@
     }
     errEl.style.display = 'none';
 
+    saveHistory();
     if (modalMode === 'edit') {
       const plate = plates.find(p => p.id === editTargetId);
       if (plate) plate.price = price;
