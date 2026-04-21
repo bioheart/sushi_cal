@@ -39,16 +39,18 @@ function render() {
         </div>
         <div class="plate-price">
           ฿${plate.price} / plate
-          ${plate.editable ? `<button class="edit-price-btn">edit</button>` : ''}
+          
         </div>
       </div>
       <div class="plate-controls">
-        ${plate.count > 0
-          ? `<button class="ctrl-btn minus-btn" aria-label="Remove one">−</button>`
+        ${plate.editable
+          ? `<button class="ctrl-btn edit-price-btn" aria-label="Edit price">✏️</button>
+          <button class="ctrl-btn delete-btn" aria-label="Delete plate">🗑</button>
+            `
           : '<div style="width:44px"></div>'}
         <div class="count-display">${plate.count}</div>
-        ${plate.editable
-          ? `<button class="ctrl-btn delete-btn" aria-label="Delete plate">🗑</button>`
+        ${plate.count > 0
+          ? `<button class="ctrl-btn minus-btn" aria-label="Remove one">−</button>`
           : '<div style="width:44px"></div>'}
       </div>
     `;

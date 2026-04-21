@@ -147,11 +147,11 @@ header span {
   transform: scale(0.92);
 }
 .ctrl-btn.minus-btn {
-  background: #ffe5e2;
+  background: #fdecea;
   color: var(--accent);
 }
 .ctrl-btn.minus-btn:hover {
-  background: #ffd0cb;
+  background: #fad0cc;
 }
 .ctrl-btn.delete-btn {
   background: #fdecea;
@@ -378,6 +378,15 @@ footer {
   margin-top: -12px;
   margin-bottom: 12px;
   display: none;
+}
+
+.ctrl-btn.edit-price-btn {
+  background: #fdecea;
+  color: var(--accent);
+  font-size: 1rem;
+}
+.ctrl-btn.edit-price-btn:hover {
+  background: #fad0cc;
 }
 
 /*# sourceMappingURL=styles.css.map */
